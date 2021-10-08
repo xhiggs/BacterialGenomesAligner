@@ -1,1 +1,1 @@
-# BacterialGenomesAligner
+# BGA - Bacterial Genomes Aligner
