@@ -16,6 +16,9 @@ class SlidingFrameHasher:
     def get_value(self) -> int:
         return self.__hash_value
 
+    def get_complimentary(self) -> int:
+        return 4 ** AlignGlobalSettings.CHUNK_LEN - 1 - self.get_value()
+
     @staticmethod
     def nucleo_to_num(nucleo: str) -> int:
         if nucleo == 'A':
