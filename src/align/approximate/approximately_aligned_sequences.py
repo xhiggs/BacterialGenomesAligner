@@ -25,8 +25,8 @@ class ApproximatelyAlignedSequences:
                                      query_tree.get_leaf([i.get_complimentary() for i in _hash_path])
                     _hash_path.pop(0)
                     if _entry_indexes:
-                        self.__chunk_matches[
-                            _i if _increasing else -(len(target) // Settings.CHUNK_LEN - 1 - _i)] = \
+                        self.__chunk_matches[Settings.CHUNK_LEN *
+                                             (_i if _increasing else -(len(target) // Settings.CHUNK_LEN - 1 - _i))] = \
                             [_k + additive_index for _k in _entry_indexes]
 
     def __getitem__(self, item):
