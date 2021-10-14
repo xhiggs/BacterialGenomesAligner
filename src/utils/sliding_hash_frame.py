@@ -1,9 +1,9 @@
-from src.align.approximate.align_global_settings import AlignGlobalSettings
+from src.align.approximate.global_settings import GlobalSettings
 
 
 class SlidingFrameHasher:
     def __init__(self, init_subsequence: str):
-        if len(init_subsequence) == AlignGlobalSettings.CHUNK_LEN:
+        if len(init_subsequence) == GlobalSettings.CHUNK_LEN:
             self.__hash_value = sum([self.nucleo_to_num(init_subsequence[i]) * (4 ** i)
                                      for i in range(len(init_subsequence))])
         else:
@@ -11,13 +11,13 @@ class SlidingFrameHasher:
 
     def slide(self, adding_nucleo: str) -> None:
         self.__hash_value //= 4
-        self.__hash_value += self.nucleo_to_num(adding_nucleo) * (4 ** (AlignGlobalSettings.CHUNK_LEN - 1))
+        self.__hash_value += self.nucleo_to_num(adding_nucleo) * (4 ** (GlobalSettings.CHUNK_LEN - 1))
 
     def get_value(self) -> int:
         return self.__hash_value
 
     def get_complimentary(self) -> int:
-        return 4 ** AlignGlobalSettings.CHUNK_LEN - 1 - self.get_value()
+        return 4 ** GlobalSettings.CHUNK_LEN - 1 - self.get_value()
 
     @staticmethod
     def nucleo_to_num(nucleo: str) -> int:

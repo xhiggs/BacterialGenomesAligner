@@ -1,8 +1,8 @@
-from src.align.approximate.align_global_settings import AlignGlobalSettings
+from src.align.approximate.global_settings import GlobalSettings
 from src.align.segmental_aligned_sequences import SegmentalAlignedSequences
 
 
-AlignGlobalSettings.init()
+GlobalSettings.init(tree_depth=4, chunk_len=8, min_considering_segment_len=5)
 
-sas = SegmentalAlignedSequences('data/large2/large_genome1.fasta', 'data/large2/large_genome2.fasta')
+sas = SegmentalAlignedSequences('data/large5/large_genome1.fasta', 'data/large5/large_genome2.fasta')
 sas.plot()

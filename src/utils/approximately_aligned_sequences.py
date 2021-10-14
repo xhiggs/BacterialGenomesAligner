@@ -1,7 +1,7 @@
 from src.utils.fasta import FastaContent
 from src.align.approximate.suffix_tree import SuffixTree
 from src.utils.sliding_hash_frame import SlidingFrameHasher as Hasher
-from src.align.approximate.align_global_settings import AlignGlobalSettings as Settings
+from src.align.approximate.global_settings import GlobalSettings as Settings
 
 
 class ApproximatelyAlignedSequences:
