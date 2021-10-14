@@ -3,7 +3,6 @@ from src.utils.fasta import FastaContent as Fasta
 from src.align.approximate.align_global_settings import AlignGlobalSettings as Settings
 
 from matplotlib import pyplot as plt
-from copy import deepcopy
 
 
 class SegmentalAlignedSequences:
@@ -12,6 +11,7 @@ class SegmentalAlignedSequences:
         _query_seq, _target_seq = Fasta(query_filepath)[0], Fasta(target_filepath)[0]
         _approx = ApproximatelyAlignedSequences(_query_seq, _target_seq)
         del _query_seq, _target_seq
+
         _graph = [list() for _ in range(0, max(_approx.keys()) + 1)]
         for _k in _approx.keys():
             for _v in [(1 if _k >= 0 else -1) * _i for _i in _approx[_k]]:
@@ -20,50 +20,44 @@ class SegmentalAlignedSequences:
         del _approx, _graph
 
     def __find_segments(self, graph: list) -> None:
-        print(graph)
-        print("Counting lines...", end="")
+        print('Counting ... ', end='')
 
-        lines_join_size2 = settings["lines_join_size"] ** 2
-        line_min_size2 = settings["line_min_size"] ** 2
+        _segments_join_size = Settings.SEGMENTS_JOIN_SIZE ** 2
+        __segment_min_size = Settings.SEGMENT_MIN_SIZE ** 2
 
-        lines = []
-
-        for x in range(0, len(graph), settings["dot_skip_rate"]):
-            for y in graph[x]:
-                for line in lines:
-                    if distance2(x, y, *line.dots[-1]) <= lines_join_size2 and \
-                            (len(line.dots) == 1 or distance2(x, y, *line.dots[-2]) <= lines_join_size2):
-                        line.dots.append([x, y])
+        for _x in range(0, len(graph), Settings.DOT_SKIP_RATE):
+            for _y in graph[_x]:
+                for _segment in self.__segments:
+                    if Segment.distance2(_x, _y, *_segment.dots[-1]) <= _segments_join_size and \
+                            (len(_segment.dots) == 1 or Segment.distance2(_x, _y, *_segment.dots[-2]) <=
+                             _segments_join_size):
+                        _segment.dots.append([_x, _y])
                         break
                 else:
-                    lines.append(Line(dots=[[x, y]]))
+                    self.__segments.append(Segment(dots=[[_x, _y]]))
 
-        for line in lines:
-            line.dots.sort()
+        for _segment in self.__segments:
+            _segment.dots.sort()
 
-            line.start_x, line.start_y = line.dots[0]
-            line.end_x, line.end_y = line.dots[-1]
+            _segment.start_x, _segment.start_y = _segment.dots[0]
+            _segment.end_x, _segment.end_y = _segment.dots[-1]
 
-            if len(line.dots) >= 2:
-                k, b = linearApproxDots(line.dots)  # \
-                line.start_y = int(k * line.start_x + b)  # |--> Approximation  TODO: int
-                line.end_y = int(k * line.end_x + b)  # /
+            if len(_segment.dots) >= 2:
+                k, b = Segment.linear_approx_dots(_segment.dots)  # \
+                _segment.start_y = int(k * _segment.start_x + b)  # |--> Approximation  TODO: int
+                _segment.end_y = int(k * _segment.end_x + b)  # /
+            # _segment[4] = _segment[4][::settings["dot_skip_rate"]]  # Optional compress
 
-            # line[4] = line[4][::settings["dot_skip_rate"]]  # Optional compress
+        self.__segments = [_segment for _segment in self.__segments if Segment.distance2(
+            _segment.start_x, _segment.start_y, _segment.end_x, _segment.end_y) >= __segment_min_size]
+        self.__segments.sort(key=lambda _segment: (_segment.start_x, _segment.start_y))
 
-        lines = [line for line in lines if
-                 distance2(line.start_x, line.start_y, line.end_x, line.end_y) >= line_min_size2]
+        for _segment in self.__segments:
+            if len(_segment.dots) < Settings.MIN_SEGMENT_LEN:
+                self.__segments.remove(_segment)
 
-        lines.sort(key=lambda line: (line.start_x, line.start_y))
-
-        for line in lines:
-            if len(line.dots) < Settings.MIN_SEGMENT_LEN:
-                lines.remove(line)
-
-        print(" {} lines".format(len(lines)))
-        print("Lines:", *lines, sep='\n')
-
-        self.__segments = deepcopy(lines)
+        print(" {} segments :".format(len(self.__segments)))
+        print(*self.__segments, sep='\n')
 
     def __len__(self) -> int:
         return len(self.__segments)
@@ -72,48 +66,27 @@ class SegmentalAlignedSequences:
         return self.__segments[item]
 
     def plot(self):  # TODO delete after debugging
-        for line in self.__segments:
-            plt.plot([line.start_x, line.end_x], [abs(line.start_y), abs(line.end_y)])
+        for _segment in self.__segments:
+            plt.plot([_segment.start_x, _segment.end_x], [_segment.start_y, _segment.end_y])
         plt.grid()
         plt.show()
 
 
-from typing import List
-from collections import deque
-
-
-class Line:
-    def __init__(self, start_x=None, start_y=None, end_x=None, end_y=None, dots=[]):
+class Segment:
+    def __init__(self, start_x=None, start_y=None, end_x=None, end_y=None, dots=None):
         self.start_x = start_x
         self.start_y = start_y
         self.end_x = end_x
         self.end_y = end_y
-        self.dots = dots
+        self.dots = dots if dots is not None else list()
 
     def __repr__(self):
-        return "Line(start_x={}, start_y={}, end_x={}, end_y={}, dots=[{}])".format(
-            self.start_x, self.start_y, self.end_x, self.end_y, len(self.dots)
-        )
+        return "Segment(start_x={}, start_y={}, end_x={}, end_y={}, dots=[{}])".format(
+            self.start_x, self.start_y, self.end_x, self.end_y, len(self.dots))
 
     @property
     def coords(self):
         return self.start_x, self.start_y, self.end_x, self.end_y
-
-    # @property
-    # def x1(self):
-    #     return self.start_x
-
-    # @property
-    # def y1(self):
-    #     return self.start_y
-
-    # @property
-    # def x2(self):
-    #     return self.end_x
-
-    # @property
-    # def y2(self):
-    #     return self.end_y
 
     @property
     def center_x(self):
@@ -124,14 +97,14 @@ class Line:
         return (self.start_y + self.end_y) // 2
 
     @property
-    def sizeX(self):
+    def size_x(self):
         return abs(self.start_x - self.end_x)
 
     @property
-    def sizeY(self):
+    def size_y(self):
         return abs(self.start_y - self.end_y)
 
-    def isTiltedCorrectly(self):
+    def is_tilted_correctly(self):
         return self.start_y <= self.end_y
 
     @property
@@ -142,63 +115,40 @@ class Line:
     def b(self):
         return self.end_y - self.end_x * self.k
 
-    def copyCoords(self):
-        return Line(self.start_x, self.start_y, self.end_x, self.end_y, dots=[])
+    def cope_coords(self):
+        return Segment(self.start_x, self.start_y, self.end_x, self.end_y, dots=[])
 
     def shift(self, dx=0, dy=0):
         self.start_x += dx
         self.start_y += dy
         self.end_x += dx
         self.end_y += dy
-        for i in range(len(self.dots)):
-            self.dots[i][0] += dx
-            self.dots[i][1] += dy
+        for _i in range(len(self.dots)):
+            self.dots[_i][0] += dx
+            self.dots[_i][1] += dy
         return self
 
-    def rotateY(self, rotation_center, line=True, dots=False):
-        if line:
+    def rotate_y(self, rotation_center, segment=True, dots=None):
+        if segment:
             self.start_y -= (self.start_y - rotation_center) * 2
             self.end_y -= (self.end_y - rotation_center) * 2
-
-        if dots:
+        if dots is not None:
             for i in range(len(self.dots)):
                 self.dots[i][1] -= (self.dots[i][1] - rotation_center) * 2
         return self
 
+    @staticmethod
+    def linear_approx_dots(dots):
+        _n, _sum_x, _sum_y, _sum_x2, _sum_xy = len(dots), 0, 0, 0, 0
+        for _x, _y in dots:
+            _sum_x += _x
+            _sum_y += _y
+            _sum_x2 += _x ** 2
+            _sum_xy += _x * _y
 
-def shiftLines(lines, count) -> List[Line]:
-    result = deque(lines)
-    for _ in range(count):
-        result.append(result.popleft())
-    return list(result)
+        _k = (_n * _sum_xy - _sum_x * _sum_y) / (_n * _sum_x2 - _sum_x * _sum_x)
+        return _k, (_sum_y - _k * _sum_x) / _n
 
-
-settings = {
-    "grid_size": int(1e5),
-    "min_block_size": int(1e3),
-    "dot_skip_rate": 10,
-    "dotsize": 0.1,
-    "fontsize": 8,
-    "figsize": (10, 7),
-
-    "min_event_size": int(1e4),
-    "lines_join_size": int(1e4) + 3,
-    "line_min_size": int(1e4)
-}
-
-
-def linearApproxDots(dots):
-    n, sumx, sumy, sumx2, sumxy = len(dots), 0, 0, 0, 0
-    for x, y in dots:
-        sumx += x
-        sumy += y
-        sumx2 += x ** 2
-        sumxy += x * y
-
-    k = (n * sumxy - (sumx * sumy)) / (n * sumx2 - sumx * sumx)
-    b = (sumy - k * sumx) / n
-    return k, b
-
-
-def distance2(x1, y1, x2, y2):
-    return (x1 - x2) ** 2 + (y1 - y2) ** 2
+    @staticmethod
+    def distance2(x1, y1, x2, y2):
+        return (x1 - x2) ** 2 + (y1 - y2) ** 2
