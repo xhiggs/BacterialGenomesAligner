@@ -1,4 +1,4 @@
-from src.utils.approximately_aligned_sequences import ApproximatelyAlignedSequences
+from src.align.approximate.approximately_aligned_sequences import ApproximatelyAlignedSequences
 from src.align.approximate.global_settings import GlobalSettings as Settings
 from src.utils.fasta import FastaContent as Fasta
 from src.utils.segment import Segment
@@ -13,7 +13,7 @@ class SegmentalAlignedSequences:
         _approx = ApproximatelyAlignedSequences(_query_seq, _target_seq)
         del _query_seq, _target_seq
 
-        _graph = [list() for _ in range(0, max(_approx.keys()) + 1)]
+        _graph = [list() for _ in range(0, max(abs(max(_approx.keys())), abs(min(_approx.keys()))) + 1)]
         for _k in _approx.keys():
             for _v in [(1 if _k >= 0 else -1) * _i for _i in _approx[_k]]:
                 _graph[abs(_k)].append(_v)
@@ -69,6 +69,6 @@ class SegmentalAlignedSequences:
 
     def plot(self):  # TODO delete after debugging
         for _segment in self.__segments:
-            plt.plot([_segment.start_x, _segment.end_x], [_segment.start_y, _segment.end_y])
+            plt.plot([_segment.start_x, _segment.end_x], [abs(_segment.start_y), abs(_segment.end_y)])
         plt.grid()
         plt.show()

@@ -1,14 +1,17 @@
 class FastaContent:
     class FastaSequence:
         def __init__(self, _description: str, _sequence: str):
-            self.__description = _description
+            self.description = _description
             self.__sequence = _sequence
+
+        def reverse(self):
+            self.__sequence = self.__sequence[::-1]
 
         def __getitem__(self, item): return self.__sequence[item]
 
         def __len__(self): return len(self.__sequence)
 
-        def __str__(self): return self.__description
+        def __str__(self): raise Exception()
 
     def __init__(self, _filepath: str):
         self.__sequences = []
