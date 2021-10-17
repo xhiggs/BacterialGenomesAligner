@@ -1,5 +1,5 @@
-from src.align.approximate.suffix_tree.query_suffix_tree import QuerySuffixTree
-from src.align.approximate.approximate_align import ApproximateAlign
+from src.align.suffix_tree.query import QuerySuffixTree
+from src.align.approximate import ApproximateAlign
 from src.utils.global_settings import GlobalSettings as Settings
 from src.utils.fasta import FastaContent
 
@@ -91,6 +91,7 @@ class SegmentalAlign:
     def __init__(self, target_sequence: FastaContent.FastaSequence, query_tree: QuerySuffixTree):
         self.__seqs_segments = dict()
         _approx = ApproximateAlign(target_sequence, query_tree)
+        self.__plot_approx(_approx)
         for _seq_d in _approx.keys:
             _graph = [list() for _ in range(len(target_sequence) + 1)]
             for _k in _approx[_seq_d].keys():
@@ -102,7 +103,7 @@ class SegmentalAlign:
 
     @staticmethod
     def __find_segments(graph: list) -> list:
-        print('Counting ... ', end='')
+        print('Searching for segments ...')
 
         _all_segments = list()
 
@@ -137,12 +138,12 @@ class SegmentalAlign:
         _all_segments.sort(key=lambda _segment: (_segment.start_x, _segment.start_y))
 
         for _segment in _all_segments:
-            print(_segment, len(_segment.dots))
+            # print(_segment, len(_segment.dots))
             if len(_segment.dots) < Settings.MIN_CONSIDERING_SEGMENT_LEN:
                 _all_segments.remove(_segment)
 
-        print(" {} segments :".format(len(_all_segments)))
-        print(*_all_segments, sep='\n')
+        # print(" {} segments :".format(len(_all_segments)))
+        # print(*_all_segments, sep='\n')
 
         return _all_segments
 
@@ -154,8 +155,23 @@ class SegmentalAlign:
 
     def plot(self):  # TODO delete after debugging
         for _s_q in self.__seqs_segments.keys():
+            plt.figure(figsize=(8, 6))
             for _segment in self.__seqs_segments[_s_q]:
                 plt.plot([_segment.start_x, _segment.end_x], [abs(_segment.start_y), abs(_segment.end_y)])
             plt.grid()
             plt.title(_s_q)
+            plt.show()
+
+    @staticmethod
+    def __plot_approx(approx: ApproximateAlign):
+        for _seq_q in approx.keys:
+            plt.figure(figsize=(8, 6))
+            _x, _y = list(), list()
+            for _k in approx[_seq_q]:
+                for _v in approx[_seq_q][_k]:
+                    _x.append(abs(_k))
+                    _y.append(abs(_v))
+            plt.plot(_x, _y, '.')
+            plt.title(_seq_q)
+            plt.grid()
             plt.show()

@@ -1,6 +1,6 @@
 from src.utils.fasta import FastaContent
 from src.utils.global_settings import GlobalSettings as Settings
-from src.align.approximate.suffix_tree.hash.sliding_hash_framer import SlidingHashFramer as HashFramer
+from src.align.suffix_tree.hash.sliding_framer import SlidingHashFramer as HashFramer
 
 from copy import copy, deepcopy
 
@@ -11,6 +11,7 @@ class QuerySuffixTree:
         self.__seqs_descriptions = list()
 
     def supply(self, sequence: FastaContent.FastaSequence) -> None:
+        print('Building suffix tree : ', end='')  # TODO Delete after debugging
         self.__seqs_descriptions.append(sequence.description)
 
         _hash_framer = HashFramer(sequence[:Settings.CHUNK_LEN * Settings.TREE_DEPTH])
@@ -25,7 +26,6 @@ class QuerySuffixTree:
                 _hash_framer.values, _i - Settings.CHUNK_LEN * (Settings.TREE_DEPTH - 1), sequence.description)
         print()
         del _hash_framer
-        print('Suffix tree is built!')  # TODO Delete after debugging
 
     def __update_leaf(self, _hash_path: list, entry_index: int, seq_description: str) -> None:
         _current_node = self.__tree
@@ -48,8 +48,11 @@ class QuerySuffixTree:
         return deepcopy(_current_node)
 
     @property
-    def descriptions(self):
+    def descriptions(self) -> list:
         return copy(self.__seqs_descriptions)
 
-    def __repr__(self):
+    def is_empty(self) -> bool:
+        return len(self.__seqs_descriptions) == 0
+
+    def __repr__(self) -> str:
         return str(self.__tree)

@@ -1,6 +1,6 @@
-from src.align.approximate.suffix_tree.query_suffix_tree import QuerySuffixTree
+from src.align.suffix_tree.query import QuerySuffixTree
 from src.utils.fasta import FastaContent
-from src.align.approximate.suffix_tree.hash.sliding_hash_framer import SlidingHashFramer as HashFramer
+from src.align.suffix_tree.hash.sliding_framer import SlidingHashFramer as HashFramer
 from src.utils.global_settings import GlobalSettings as Settings
 
 
@@ -11,10 +11,11 @@ class ApproximateAlign:
 
     def __compare_seq_with_tree(self, target: FastaContent.FastaSequence, query_tree: QuerySuffixTree) -> None:
         for _reversed in [False, True]:
+            print('Comparing {} sequence : '.format('reversed' if _reversed else 'initial'), end='')
             _hash_framer = HashFramer(target[:Settings.CHUNK_LEN * Settings.TREE_DEPTH])
             self.__handle_hash_framer(_hash_framer, 0, query_tree)
             for _i in range(Settings.CHUNK_LEN * Settings.TREE_DEPTH, len(target)):
-                if _i % 100000 == 0:
+                if _i % 400000 == 0:
                     print(f'{_i // 100000}e+5..', end='')
                 _hash_framer.slide_by_nucleo(target[_i])
                 _entry_index = _i - Settings.CHUNK_LEN * Settings.TREE_DEPTH + 1

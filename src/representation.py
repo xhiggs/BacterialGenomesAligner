@@ -1,16 +1,10 @@
 from src.utils.global_settings import GlobalSettings
-from src.align.segmental_align import SegmentalAlign
-from src.align.approximate.suffix_tree.query_suffix_tree import QuerySuffixTree
-from src.utils.fasta import FastaContent
+from src.affinity_structure.bacterial import BacterialAffinityStructure
 
-GlobalSettings.init()
 
-f = FastaContent('large2/large_genome1.fasta')[0]
+GlobalSettings.init(tree_depth=9, segment_min_size=int(2.5e3))
 
-q = QuerySuffixTree()
-q.supply(f)
+affinity_structure = BacterialAffinityStructure('grouptest')
 
-x, y = [], []
-
-aas = SegmentalAlign(FastaContent('large2/large_genome2.fasta')[0], q)
-aas.plot()
+for _ in range(2):
+    affinity_structure.handle_next_genome()

@@ -20,9 +20,9 @@ class FastaContent:
 
         def __len__(self): return len(self.__sequence)
 
-    def __init__(self, _filepath: str):
+    def __init__(self, filename: str):
         self.__sequences = list()
-        with open(GlobalSettings.DATA_FOLDER + _filepath, 'r') as _f:
+        with open(GlobalSettings.DATA_FOLDER + filename, 'r') as _f:
             for _raw_seq in ''.join(_f.readlines()).split('>')[1:]:
                 _splitted = _raw_seq.split('\n')
                 self.__sequences.append(FastaContent.FastaSequence(_splitted[0], ''.join(_splitted[1:])))
@@ -30,3 +30,7 @@ class FastaContent:
     def __getitem__(self, item): return self.__sequences[item]
 
     def __len__(self): return len(self.__sequences)
+
+    @property
+    def first_seq(self):
+        return self.__sequences[0]
